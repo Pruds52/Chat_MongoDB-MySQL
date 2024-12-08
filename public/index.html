@@ -2,109 +2,87 @@
 
 <html lang="pt-br">
 
-    <head>
+<head>
 
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CHAT V3</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT V3</title>
 
-        <!-- Importa o arquivo CSS: -->
-        <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css">
 
-        <!-- Importa o Jquery para a aplicação frontend: -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
-        <!-- Importa o SocketIO para a aplicação frontend: -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
 
-    </head>
+</head>
 
-    <body>
+<body>
 
-        <div class="container">
-        
-            <h1>##### APP DE CHAT COM MONGODB #####</h1>
+    <div class="container">
 
-            <form id="chat">
+        <h1>##### APP DE CHAT COM MONGODB #####</h1>
 
-                <input type="text" name="username" placeholder="Digite seu usuario">
-                <br />
-                <input multiple type="text" name="message" placeholder="Digite sua mensagem">
-                <br />
-                <button type="submit">Enviar</button>
-                
-                <!-- Carega todas as mensagens enviadas: -->
-                <div class="messages"></div>
+        <form id="chat">
 
-            </form>
+            <input type="text" name="username" placeholder="Digite seu usuario">
+            <br />
+            <input multiple type="text" name="message" placeholder="Digite sua mensagem">
+            <br />
+            <button type="submit">Enviar</button>
 
-        </div>
+            <div class="messages"></div>
 
-        <script src="/socket.io/socket.io.js"></script>
+        </form>
 
-        <script>
+    </div>
 
-            /* Conecta o docketIO da aplicação web frontend com o socketIO da aplicação backend nodeJS: */
-            const socket = io('http://localhost:3000');
+    <script>
 
-            /* Funçao que formata o HTML para exbir as mensagens enviadas na tela (manipula o div de class messages - linha 26): */
-            function renderMessage(message) {
-                $('.messages').append('<div class="message"><strong>' 
-                + message.author + message.data_hora + '</strong>: '+ message.message +'</div>');
-            }
+        const socket = io('http://localhost:3000');
 
-            /* 
-                Recebe e exibe todas as mensagens já enviadas por todos os usuário do chat- Conversa diretamente com o metódo emit da linha 51 do backend: 
-            */
-            socket.on('previousMessage', function(messages) {
-                for (message of messages) {
-                    renderMessage(message);
-                }
-            });
+        function renderMessage(message) {
+            $('.messages').append('<div class="message"><strong>'
+                + message.author + message.data_hora + '</strong>: ' + message.message + '</div>');
+        }
 
-            /* 
-                Recebe as mensagens emitidas pela ação bradcast da aplicação backend e rederiza essas na tela - Conversa diretamente com o método socket.broadcast.emit('receivedMessage', data), linha 60 do backend:
-            */
-            socket.on('receivedMessage', function(message) {
+        socket.on('previousMessage', function (messages) {
+            for (message of messages) {
                 renderMessage(message);
-            });
+            }
+        });
 
-            /* Executa sempre que uma açao de submit for disparada: */
-            $('#chat').submit(function(event) {
+        socket.on('receivedMessage', function (message) {
+            renderMessage(message);
+        });
 
-                event.preventDefault();
+        $('#chat').submit(function (event) {
 
-                /* Recupera os valores dos campos do formulário: */
-                var author = $('input[name=username]').val();
-                var message = $('input[name=message]').val();
+            event.preventDefault();
 
-                /* Verfica se o usuário preencheu todos os campos: */
-                if (author.length && message.length) {
+            var author = $('input[name=username]').val();
+            var message = $('input[name=message]').val();
 
-                    /* Cria um objeto javascript para recuperar a data e a hora do envio da mensagem: */
-                    let data_hora_obj = new Date();
+            if (author.length && message.length) {
 
-                    /* Configura um formata de data e hora dd/mm/aaaa-hh:mm:ss */
-                    let data_hora_msg = `
+                let data_hora_obj = new Date();
+
+                let data_hora_msg = `
                                             [${data_hora_obj.getDate()}/${data_hora_obj.getMonth()}/${data_hora_obj.getFullYear()}-${data_hora_obj.getHours()}:${data_hora_obj.getMinutes()}:${data_hora_obj.getSeconds()}]`;
 
-                    /* Monta o objeto JSON para enviar a mensagem: */
-                    var messageObject = {
-                        author: author,
-                        data_hora:data_hora_msg,
-                        message: message,
-                    };
+                var messageObject = {
+                    author: author,
+                    data_hora: data_hora_msg,
+                    message: message,
+                };
 
-                    /* Exibe a mensagem na tela do usuário qu enviou a mensagem e propaga o broadcast para todos os outros usuários: */ 
-                    renderMessage(messageObject);
+                renderMessage(messageObject);
 
-                    /* Envia o objeto JSON da mensagem atual escrita pelo usuário para o sevidor: */
-                    socket.emit('sendMessage', messageObject);
-                }
+                socket.emit('sendMessage', messageObject);
+            }
 
-            });
+        });
 
-        </script>
+    </script>
 
-    </body>
+</body>
 
 </html>
